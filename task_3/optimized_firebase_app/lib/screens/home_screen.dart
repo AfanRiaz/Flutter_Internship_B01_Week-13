@@ -77,7 +77,7 @@ class _HomeScreenState
       context,
       MaterialPageRoute(
         builder: (_) =>
-        const profile.ProfileScreen(),
+        profile.ProfileScreen(),
       ),
     );
   }
