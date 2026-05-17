@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../models/product_model.dart';
+import '../services/firestore_service.dart';
+import '../widgets/product_tile.dart';
+
 // Deferred Import
-import 'profile_screen.dart' deferred as profile;
+import 'profile_screen.dart'
+deferred as profile;
 
 class HomeScreen extends StatefulWidget {
 
@@ -15,31 +20,81 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState
     extends State<HomeScreen> {
 
+  final FirestoreService firestoreService =
+  FirestoreService();
+
+  List<ProductModel> products = [];
+
   bool isLoading = false;
 
+  bool isProfileLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadProducts();
+  }
+
   // =========================
-  // LOAD PROFILE FEATURE
+  // LOAD PRODUCTS
   // =========================
 
-  Future<void> openProfile() async {
+  Future<void> loadProducts() async {
 
     setState(() {
       isLoading = true;
     });
 
-    // Lazy Load Screen
-    await profile.loadLibrary();
+    List<ProductModel> fetchedProducts =
+    await firestoreService.fetchProducts();
+
+    products.addAll(fetchedProducts);
 
     setState(() {
       isLoading = false;
     });
+  }
 
-    // Navigate
+  // =========================
+  // OPEN PROFILE
+  // =========================
+
+  Future<void> openProfile() async {
+
+    setState(() {
+      isProfileLoading = true;
+    });
+
+    // Deferred Loading
+    await profile.loadLibrary();
+
+    setState(() {
+      isProfileLoading = false;
+    });
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) =>
         const profile.ProfileScreen(),
+      ),
+    );
+  }
+
+  // =========================
+  // INCREMENT VIEWS
+  // =========================
+
+  Future<void> increaseViews(
+      String id,
+      ) async {
+
+    await firestoreService.incrementViews(id);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Views Increased"),
       ),
     );
   }
@@ -52,24 +107,92 @@ class _HomeScreenState
       appBar: AppBar(
         centerTitle: true,
         title: const Text(
-          "Deferred Loading App",
+          "Optimized Firestore App",
         ),
+
+        actions: [
+
+          IconButton(
+
+            onPressed:
+            isProfileLoading
+                ? null
+                : openProfile,
+
+            icon:
+            isProfileLoading
+
+                ? const CircularProgressIndicator()
+
+                : const Icon(Icons.person),
+          )
+        ],
       ),
 
-      body: Center(
+      floatingActionButton:
+      FloatingActionButton(
 
-        child: isLoading
+        onPressed: () async {
 
-            ? const CircularProgressIndicator()
+          await firestoreService.batchInsert();
 
-            : ElevatedButton(
+          ScaffoldMessenger.of(context)
+              .showSnackBar(
+            const SnackBar(
+              content:
+              Text("Batch Insert Success"),
+            ),
+          );
+        },
 
-          onPressed: openProfile,
+        child: const Icon(Icons.add),
+      ),
 
-          child: const Text(
-            "Open Profile Screen",
+      body: Column(
+
+        children: [
+
+          Expanded(
+
+            child: ListView.builder(
+
+              itemCount: products.length,
+
+              itemBuilder: (context, index) {
+
+                return ProductTile(
+
+                  product: products[index],
+
+                  onTap: () async {
+
+                    await increaseViews(
+                      products[index].id,
+                    );
+                  },
+                );
+              },
+            ),
           ),
-        ),
+
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.all(10),
+              child:
+              CircularProgressIndicator(),
+            ),
+
+          ElevatedButton(
+
+            onPressed: loadProducts,
+
+            child: const Text(
+              "Load More",
+            ),
+          ),
+
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }

@@ -18,22 +18,25 @@ class FirestoreService {
     Query query = firestore
         .collection("products")
 
-    // Multiple conditions
+    // Multiple Conditions
         .where("category", isEqualTo: "electronics")
         .where("isAvailable", isEqualTo: true)
 
-    // Array filter
+    // Array Filter
         .where("tags", arrayContains: "mobile")
 
-    // Limit results
+    // Limit
         .limit(5);
 
     // Pagination
     if (lastDocument != null) {
-      query = query.startAfterDocument(lastDocument!);
+      query = query.startAfterDocument(
+        lastDocument!,
+      );
     }
 
-    QuerySnapshot snapshot = await query.get();
+    QuerySnapshot snapshot =
+    await query.get();
 
     if (snapshot.docs.isNotEmpty) {
       lastDocument = snapshot.docs.last;
@@ -53,7 +56,9 @@ class FirestoreService {
   // INCREMENT VIEWS
   // =========================
 
-  Future<void> incrementViews(String docId) async {
+  Future<void> incrementViews(
+      String docId,
+      ) async {
 
     await firestore
         .collection("products")
@@ -82,7 +87,6 @@ class FirestoreService {
         "isAvailable": true,
         "views": 0,
         "tags": ["mobile", "android"],
-        "createdAt": Timestamp.now(),
       });
     }
 

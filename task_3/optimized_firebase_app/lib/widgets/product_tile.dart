@@ -16,16 +16,20 @@ class ProductTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return ListTile(
-      title: Text(product.name),
+    return Card(
 
-      subtitle: Text(
-        "Views : ${product.views}",
+      child: ListTile(
+
+        title: Text(product.name),
+
+        subtitle: Text(
+          "Views : ${product.views}",
+        ),
+
+        trailing: const Icon(Icons.arrow_forward),
+
+        onTap: onTap,
       ),
-
-      trailing: const Icon(Icons.arrow_forward),
-
-      onTap: onTap,
     );
   }
 }
